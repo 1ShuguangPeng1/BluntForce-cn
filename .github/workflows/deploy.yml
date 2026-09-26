@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: bluntforce-production-deploy
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -33,30 +37,56 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
 
-      - name: Build the application image
-        run: |
-          docker build -t bluntforce-cn-app:latest .
-          docker save bluntforce-cn-app:latest | gzip -1 > bluntforce-cn-app.tar.gz
-
-      - name: Package and upload the release
+      - name: Package and upload the source
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
           git bundle create bluntforce-deploy.bundle main
+          ls -lh bluntforce-deploy.bundle
           scp -o BatchMode=yes -o ConnectTimeout=15 \
-            bluntforce-deploy.bundle bluntforce-cn-app.tar.gz \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+            bluntforce-deploy.bundle "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
 
-      - name: Update and restart the ECS services
+      - name: Check the ECS build base
+        id: ecs_build_base
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          if ssh -o BatchMode=yes -o ConnectTimeout=15 \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            'docker image inspect node:22-bookworm-slim > /dev/null 2>&1'; then
+            echo "required=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The ECS cannot reliably reach Docker Hub. Seed the Node build image once;
+      # subsequent deployments reuse it and only transfer the small Git bundle.
+      - name: Seed the Node build image on ECS
+        if: steps.ecs_build_base.outputs.required == 'true'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          docker pull node:22-bookworm-slim
+          docker save node:22-bookworm-slim | gzip -9 > node-22-bookworm-slim.tar.gz
+          ls -lh node-22-bookworm-slim.tar.gz
+          scp -o BatchMode=yes -o ConnectTimeout=15 \
+            node-22-bookworm-slim.tar.gz "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+          ssh -o BatchMode=yes -o ConnectTimeout=15 \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            'gzip -dc /tmp/node-22-bookworm-slim.tar.gz | docker load && rm -f /tmp/node-22-bookworm-slim.tar.gz'
+
+      - name: Build and restart the ECS services
         run: |
           ssh -o BatchMode=yes -o ConnectTimeout=15 "$DEPLOY_USER@$DEPLOY_HOST" \
             "cd '$DEPLOY_PATH' && \
              git fetch /tmp/bluntforce-deploy.bundle refs/heads/main:refs/remotes/deploy/main && \
              rm -f /tmp/bluntforce-deploy.bundle && \
-             git merge --ff-only refs/remotes/deploy/main && \
-             gzip -dc /tmp/bluntforce-cn-app.tar.gz | docker load && \
              rm -f /tmp/bluntforce-cn-app.tar.gz && \
+             git merge --ff-only refs/remotes/deploy/main && \
+             docker compose --env-file .env.production build app && \
              docker compose --env-file .env.production up --no-build --force-recreate -d app nginx && \
              docker compose --env-file .env.production ps && \
              curl --fail --retry 12 --retry-delay 5 --retry-connrefused http://127.0.0.1/ > /dev/null"

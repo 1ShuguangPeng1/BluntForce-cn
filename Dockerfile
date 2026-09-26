@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 FROM node:22-bookworm-slim AS base
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -8,7 +6,7 @@ FROM base AS dependencies
 COPY package.json package-lock.json ./
 # `npm install` reconciles the lockfile when the image is built. This keeps
 # builds usable while the project moves off the original Supabase dependency set.
-RUN npm install --no-audit --no-fund
+RUN npm install --no-audit --no-fund --registry=https://registry.npmmirror.com
 
 FROM base AS builder
 COPY --from=dependencies /app/node_modules ./node_modules
