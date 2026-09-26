@@ -162,3 +162,53 @@ export const favorites = pgTable(
     uniqueFav: uniqueIndex("favorites_unique").on(table.user_id, table.post_id),
   }),
 );
+
+// ============================================================
+// 8. 好友关系
+// ============================================================
+export const friendships = pgTable(
+  "friendships",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    requester_id: uuid("requester_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    addressee_id: uuid("addressee_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    status: text("status").default("pending").notNull(),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    requesterIdx: index("friendships_requester_idx").on(table.requester_id),
+    addresseeIdx: index("friendships_addressee_idx").on(table.addressee_id),
+  }),
+);
+
+// ============================================================
+// 9. 一对一私信
+// ============================================================
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    sender_id: uuid("sender_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    receiver_id: uuid("receiver_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    content: text("content").notNull(),
+    is_read: boolean("is_read").default(false).notNull(),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    conversationIdx: index("messages_conversation_idx").on(
+      table.sender_id,
+      table.receiver_id,
+      table.created_at,
+    ),
+    unreadIdx: index("messages_unread_idx").on(table.receiver_id, table.is_read),
+  }),
+);

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { CalendarDays } from "lucide-react";
 
@@ -9,6 +10,7 @@ type Props = {
   postCount?: number;
   petCount?: number;
   isOwner?: boolean;
+  actions?: ReactNode;
 };
 
 export function UserProfileCard({
@@ -19,6 +21,7 @@ export function UserProfileCard({
   postCount = 0,
   petCount = 0,
   isOwner = false,
+  actions,
 }: Props) {
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-8 shadow-apple">
@@ -54,6 +57,8 @@ export function UserProfileCard({
             <p className="text-xs text-muted-foreground">宠物</p>
           </div>
         </div>
+
+        {actions}
       </div>
     </div>
   );

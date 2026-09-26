@@ -35,6 +35,8 @@ type PostCardProps = {
 };
 
 export function PostCard({ post }: PostCardProps) {
+  const imageUrls = post.image_urls ?? [];
+
   return (
     <Link
       href={`/post/${post.id}`}
@@ -72,19 +74,22 @@ export function PostCard({ post }: PostCardProps) {
           </p>
         )}
 
-        {post.image_urls && post.image_urls.length > 0 && (
-          <div className={`grid gap-2 overflow-hidden rounded-xl ${post.image_urls.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
-            {post.image_urls.slice(0, 2).map((url, index) => (
+        {imageUrls.length > 0 && (
+          <div className={`grid gap-2 overflow-hidden rounded-xl bg-muted/30 ${imageUrls.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+            {imageUrls.slice(0, 2).map((url, index) => (
               <div key={url} className="relative">
                 <img
                   src={url}
                   alt={post.title || "帖子图片"}
-                  className="h-44 w-full object-cover"
+                  className={imageUrls.length > 1
+                    ? "h-56 w-full object-contain"
+                    : "max-h-[32rem] w-full object-contain"
+                  }
                   loading="lazy"
                 />
-                {index === 1 && post.image_urls && post.image_urls.length > 2 && (
+                {index === 1 && imageUrls.length > 2 && (
                   <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-sm font-medium text-white">
-                    +{post.image_urls.length - 2}
+                    +{imageUrls.length - 2}
                   </span>
                 )}
               </div>

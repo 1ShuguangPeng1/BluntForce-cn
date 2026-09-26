@@ -98,13 +98,16 @@ export function PostDetail({ post }: PostDetailProps) {
 
       {/* Images gallery */}
       {post.image_urls && post.image_urls.length > 0 && (
-        <div className={`grid gap-2 ${post.image_urls.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+        <div className={`grid gap-2 overflow-hidden rounded-xl bg-muted/30 ${post.image_urls.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
           {post.image_urls.map((url) => (
             <a key={url} href={url} target="_blank" rel="noopener noreferrer">
               <img
                 src={url}
                 alt=""
-                className="rounded-xl border border-border/60 w-full h-48 object-cover hover:opacity-90 transition-opacity"
+                className={post.image_urls && post.image_urls.length > 1
+                  ? "h-64 w-full rounded-xl border border-border/60 object-contain transition-opacity hover:opacity-90"
+                  : "max-h-[42rem] w-full rounded-xl border border-border/60 object-contain transition-opacity hover:opacity-90"
+                }
                 loading="lazy"
               />
             </a>

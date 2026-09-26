@@ -4,6 +4,7 @@
 
 - ECS：Docker 运行 Next.js 与 Nginx
 - PostgreSQL 容器：用户、宠物、健康记录、帖子、评论、点赞与收藏
+- 社交功能：好友申请、好友管理与一对一私信
 - 本地持久化卷：头像及帖子图片
 - 应用自身认证：bcrypt 密码哈希 + HttpOnly JWT Cookie
 
@@ -18,6 +19,7 @@ npm run dev
 ```
 
 设置 `SESSION_SECRET`、`POSTGRES_*` 与 `DATABASE_URL`。PostgreSQL 首次启动时会自动执行 `database/init.sql`。
+应用启动时还会执行幂等迁移，为已有数据库补充新表和索引，不会清空现有数据。
 将站长登录邮箱写入 `ADMIN_EMAILS`；多个管理员邮箱使用英文逗号分隔。只有这里列出的账号可以置顶或取消置顶帖子。
 
 ## ECS 部署

@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { PawPrint, Menu, LogOut, User, Settings, PlusCircle } from "lucide-react";
+import { PawPrint, Menu, LogOut, User, Settings, PlusCircle, Users } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "首页" },
@@ -29,6 +29,7 @@ export function Navbar() {
   const { user, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profile, setProfile] = useState<{ username?: string; avatar_url?: string | null } | null>(null);
+  const visibleNavLinks = user ? [...navLinks, { href: "/friends", label: "好友" }] : navLinks;
 
   useEffect(() => {
     let active = true;
@@ -62,7 +63,7 @@ export function Navbar() {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-6 sm:flex">
-          {navLinks.map((link) => (
+          {visibleNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -110,6 +111,10 @@ export function Navbar() {
                   <PlusCircle className="mr-2 h-4 w-4" />
                   发布帖子
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/friends")}>
+                  <Users className="mr-2 h-4 w-4" />
+                  好友与私信
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
@@ -130,7 +135,7 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="right" className="w-64 pt-12">
               <nav className="flex flex-col gap-4">
-                {navLinks.map((link) => (
+                {visibleNavLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
