@@ -65,7 +65,7 @@ export default function EditPostPage() {
       <div className="space-y-8">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">编辑帖子</h1>
-          <p className="text-sm text-muted-foreground">修改 {defaults.title}</p>
+          <p className="text-sm text-muted-foreground">修改 {defaults.title || "图片帖子"}</p>
         </div>
 
         <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-apple space-y-6">

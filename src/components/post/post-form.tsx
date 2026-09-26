@@ -93,8 +93,10 @@ export function PostForm({ defaultValues, onSubmit, submitLabel, backHref }: Pro
     e.preventDefault();
     setError("");
 
-    if (!title.trim()) { setError("请输入标题"); return; }
-    if (!content.trim()) { setError("请输入内容"); return; }
+    if (!title.trim() && !content.trim() && imageUrls.length === 0) {
+      setError("请添加文字或图片");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -132,7 +134,7 @@ export function PostForm({ defaultValues, onSubmit, submitLabel, backHref }: Pro
 
       {/* Title */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">标题</label>
+        <label className="text-sm font-medium text-foreground mb-2 block">标题（选填）</label>
         <input
           type="text"
           value={title}
@@ -145,12 +147,11 @@ export function PostForm({ defaultValues, onSubmit, submitLabel, backHref }: Pro
 
       {/* Content */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">内容 (Markdown)</label>
+        <label className="text-sm font-medium text-foreground mb-2 block">内容（选填）</label>
         <div className="relative">
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="支持 Markdown 语法…&#10;&#10;# 标题&#10;**粗体** *斜体*&#10;- 列表项&#10;[链接](url)&#10;![图片](url)"
             rows={15}
             className="w-full rounded-xl border border-border/60 bg-card px-4 py-3 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-colors font-mono resize-y"
           />

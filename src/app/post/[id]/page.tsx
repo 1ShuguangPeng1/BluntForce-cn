@@ -7,9 +7,11 @@ import { userFavoritedPost } from "@/lib/actions/favorite";
 import { getServerUser } from "@/lib/auth-server";
 import { PostDetail } from "@/components/post/post-detail";
 import { PostActions } from "@/components/post/post-actions";
+import { PostAdminActions } from "@/components/post/post-admin-actions";
 import { CommentSection } from "@/components/comment/comment-section";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit } from "lucide-react";
+import { isAdminUser } from "@/lib/admin";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -30,6 +32,7 @@ export default async function PostDetailPage({ params }: Props) {
   recordPostView(id);
 
   const isAuthor = user?.id === post.author_id;
+  const isAdmin = isAdminUser(user);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
@@ -46,21 +49,26 @@ export default async function PostDetailPage({ params }: Props) {
           <PostDetail post={post} />
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <PostActions
             postId={post.id}
             initialLiked={liked}
             initialLikeCount={likeData.count}
             initialFavorited={favorited}
           />
-          {isAuthor && (
-            <Link href={`/post/${post.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Edit className="mr-2 h-4 w-4" />
-                编辑
-              </Button>
-            </Link>
-          )}
+          <div className="flex flex-wrap items-start gap-2">
+            {isAdmin && (
+              <PostAdminActions postId={post.id} initiallyPinned={Boolean(post.is_pinned)} />
+            )}
+            {isAuthor && (
+              <Link href={`/post/${post.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Edit className="mr-2 h-4 w-4" />
+                  编辑
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-apple">

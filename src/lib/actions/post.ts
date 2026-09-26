@@ -6,6 +6,7 @@ import { getServerUser } from "@/lib/auth-server";
 import { eq, desc, and, or, ilike, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { isOwnedStorageUrl } from "@/lib/storage/local";
+import { isAdminUser } from "@/lib/admin";
 
 type PostInput = {
   title: string;
@@ -22,12 +23,15 @@ function validatePostInput(data: PostInput) {
   const tags = (data.tags ?? []).map((tag) => tag.trim()).filter(Boolean);
   const imageUrls = data.image_urls ?? [];
 
-  if (!title || title.length > 120) throw new Error("标题不能为空且不能超过 120 个字符");
-  if (!content || content.length > 20_000) throw new Error("正文不能为空且不能超过 20000 个字符");
+  if (title.length > 120) throw new Error("标题不能超过 120 个字符");
+  if (content.length > 20_000) throw new Error("正文不能超过 20000 个字符");
   if (!categories.has(data.category)) throw new Error("帖子分类无效");
   if (tags.length > 8 || tags.some((tag) => tag.length > 24)) throw new Error("标签最多 8 个，每个不超过 24 个字符");
   if (imageUrls.length > 9 || imageUrls.some((url) => !isOwnedStorageUrl(url))) {
     throw new Error("图片来源无效");
+  }
+  if (!title && !content && imageUrls.length === 0) {
+    throw new Error("请添加文字或图片");
   }
   return { title, content, tags, imageUrls };
 }
@@ -50,6 +54,7 @@ export async function createPost(data: PostInput) {
     .returning();
 
   revalidatePath("/");
+  revalidatePath("/explore");
   return post;
 }
 
@@ -74,6 +79,8 @@ export async function updatePost(id: string, data: PostInput) {
     .where(eq(posts.id, id));
 
   revalidatePath(`/post/${id}`);
+  revalidatePath("/");
+  revalidatePath("/explore");
 }
 
 export async function deletePost(id: string) {
@@ -85,6 +92,25 @@ export async function deletePost(id: string) {
 
   await db.delete(posts).where(eq(posts.id, id));
   revalidatePath("/");
+  revalidatePath("/explore");
+}
+
+export async function setPostPinned(id: string, pinned: boolean) {
+  const user = await getServerUser();
+  if (!isAdminUser(user)) throw new Error("只有管理员可以置顶帖子");
+  if (typeof pinned !== "boolean") throw new Error("置顶状态无效");
+
+  const [post] = await db
+    .update(posts)
+    .set({ is_pinned: pinned, updated_at: new Date() })
+    .where(eq(posts.id, id))
+    .returning({ id: posts.id });
+
+  if (!post) throw new Error("帖子不存在");
+
+  revalidatePath("/");
+  revalidatePath("/explore");
+  revalidatePath(`/post/${id}`);
 }
 
 export async function getPostById(id: string) {
@@ -106,6 +132,7 @@ export async function getPosts(options?: {
   authorId?: string;
   tag?: string;
   sort?: "latest" | "hot" | "most_liked";
+  pinned?: boolean;
   page?: number;
   limit?: number;
 }) {
@@ -122,12 +149,15 @@ export async function getPosts(options?: {
   if (options?.authorId) {
     conditions.push(eq(posts.author_id, options.authorId));
   }
+  if (typeof options?.pinned === "boolean") {
+    conditions.push(eq(posts.is_pinned, options.pinned));
+  }
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
   const orderFn = sort === "hot"
     ? [desc(posts.view_count), desc(posts.created_at)]
-    : [desc(posts.is_pinned), desc(posts.created_at)];
+    : [desc(posts.created_at)];
 
   const all = await db.query.posts.findMany({ where, orderBy: orderFn });
 

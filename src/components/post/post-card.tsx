@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element -- uploaded images are served by the configured storage origin. */
+
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageSquare, Heart, Eye, Pin } from "lucide-react";
@@ -21,6 +23,7 @@ type PostCardProps = {
     id: string;
     title: string;
     content: string;
+    image_urls: string[] | null;
     category: string;
     tags: string[] | null;
     is_pinned?: boolean | null;
@@ -56,14 +59,38 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary transition-colors line-clamp-2">
-          {post.title}
-        </h3>
+        {post.title && (
+          <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary transition-colors line-clamp-2">
+            {post.title}
+          </h3>
+        )}
 
         {/* Excerpt */}
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-          {post.content.replace(/[#*`>\[\]!\-]/g, "").substring(0, 200)}
-        </p>
+        {post.content && (
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {post.content.replace(/[#*`>\[\]!\-]/g, "").substring(0, 200)}
+          </p>
+        )}
+
+        {post.image_urls && post.image_urls.length > 0 && (
+          <div className={`grid gap-2 overflow-hidden rounded-xl ${post.image_urls.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+            {post.image_urls.slice(0, 2).map((url, index) => (
+              <div key={url} className="relative">
+                <img
+                  src={url}
+                  alt={post.title || "帖子图片"}
+                  className="h-44 w-full object-cover"
+                  loading="lazy"
+                />
+                {index === 1 && post.image_urls && post.image_urls.length > 2 && (
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-sm font-medium text-white">
+                    +{post.image_urls.length - 2}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Tags */}
         {post.tags && post.tags.length > 0 && (

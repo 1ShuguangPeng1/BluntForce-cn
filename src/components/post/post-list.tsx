@@ -5,6 +5,7 @@ type PostListProps = {
     id: string;
     title: string;
     content: string;
+    image_urls: string[] | null;
     category: string;
     tags: string[] | null;
     is_pinned?: boolean | null;

@@ -18,6 +18,7 @@ npm run dev
 ```
 
 设置 `SESSION_SECRET`、`POSTGRES_*` 与 `DATABASE_URL`。PostgreSQL 首次启动时会自动执行 `database/init.sql`。
+将站长登录邮箱写入 `ADMIN_EMAILS`；多个管理员邮箱使用英文逗号分隔。只有这里列出的账号可以置顶或取消置顶帖子。
 
 ## ECS 部署
 
@@ -41,11 +42,11 @@ sh scripts/backup.sh
 
 ## GitHub 自动部署
 
-`.github/workflows/deploy.yml` 会在 `main` 分支推送后 SSH 到 ECS 并执行 `git pull --ff-only` 与 `docker compose up --build -d`。它需要以下 GitHub Actions Secrets：
+`.github/workflows/deploy.yml` 会在 `main` 分支推送后，把 Git bundle 主动上传到 ECS，再执行仅快进更新和 `docker compose up --build -d`。ECS 不需要主动访问 GitHub。它需要以下 GitHub Actions Secrets：
 
 - `DEPLOY_HOST`
 - `DEPLOY_USER`
-- `DEPLOY_SSH_PRIVATE_KEY`
+- `DEPLOY_SSH_PRIVATE_KEY_B64`，部署私钥经过 Base64 编码后的单行内容
 - `DEPLOY_PATH`，例如 `/opt/bluntforce`
 
 生产密钥只保存在 ECS 的 `.env.production`，不放入 GitHub Secrets 或仓库。

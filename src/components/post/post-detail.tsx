@@ -52,9 +52,11 @@ export function PostDetail({ post }: PostDetailProps) {
           {categoryLabels[post.category] ?? post.category}
         </span>
 
-        <h1 className="text-2xl font-semibold tracking-tight leading-snug">
-          {post.title}
-        </h1>
+        {post.title && (
+          <h1 className="text-2xl font-semibold tracking-tight leading-snug">
+            {post.title}
+          </h1>
+        )}
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -96,7 +98,7 @@ export function PostDetail({ post }: PostDetailProps) {
 
       {/* Images gallery */}
       {post.image_urls && post.image_urls.length > 0 && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className={`grid gap-2 ${post.image_urls.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
           {post.image_urls.map((url) => (
             <a key={url} href={url} target="_blank" rel="noopener noreferrer">
               <img
@@ -110,53 +112,55 @@ export function PostDetail({ post }: PostDetailProps) {
         </div>
       )}
 
-      {/* Divider */}
-      <div className="border-t border-border/60" />
+      {post.content && (
+        <>
+          <div className="border-t border-border/60" />
 
-      {/* Content */}
-      <div className="prose prose-sm max-w-none prose-headings:tracking-tight prose-headings:font-semibold prose-a:text-primary prose-img:rounded-xl prose-img:border prose-img:border-border/60">
-        <Markdown
-          components={{
-            img: ({ src, alt }) => (
-              <img
-                src={src}
-                alt={alt ?? ""}
-                className="rounded-xl border border-border/60 max-w-full my-4"
-                loading="lazy"
-              />
-            ),
-            a: ({ href, children }) => (
-              <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                {children}
-              </a>
-            ),
-            code: ({ className, children, ...props }) => {
-              const isInline = !className;
-              if (isInline) {
-                return (
-                  <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+          <div className="prose prose-sm max-w-none prose-headings:tracking-tight prose-headings:font-semibold prose-a:text-primary prose-img:rounded-xl prose-img:border prose-img:border-border/60">
+            <Markdown
+              components={{
+                img: ({ src, alt }) => (
+                  <img
+                    src={src}
+                    alt={alt ?? ""}
+                    className="rounded-xl border border-border/60 max-w-full my-4"
+                    loading="lazy"
+                  />
+                ),
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline">
                     {children}
-                  </code>
-                );
-              }
-              return (
-                <pre className="bg-muted rounded-xl p-4 overflow-x-auto text-sm font-mono">
-                  <code className={className} {...props}>
+                  </a>
+                ),
+                code: ({ className, children, ...props }) => {
+                  const isInline = !className;
+                  if (isInline) {
+                    return (
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                        {children}
+                      </code>
+                    );
+                  }
+                  return (
+                    <pre className="bg-muted rounded-xl p-4 overflow-x-auto text-sm font-mono">
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    </pre>
+                  );
+                },
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-2 border-primary/30 pl-4 italic text-muted-foreground">
                     {children}
-                  </code>
-                </pre>
-              );
-            },
-            blockquote: ({ children }) => (
-              <blockquote className="border-l-2 border-primary/30 pl-4 italic text-muted-foreground">
-                {children}
-              </blockquote>
-            ),
-          }}
-        >
-          {post.content}
-        </Markdown>
-      </div>
+                  </blockquote>
+                ),
+              }}
+            >
+              {post.content}
+            </Markdown>
+          </div>
+        </>
+      )}
     </article>
   );
 }
