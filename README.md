@@ -29,6 +29,8 @@ docker compose --env-file .env.production up --build -d
 
 应用通过 Compose 内的 Nginx 监听 80 端口。`postgres_data` 和 `uploads_data` 是持久化卷，普通的重新构建不会删除数据。不要执行 `docker compose down -v`。正式域名准备好后再配置 HTTPS。
 
+通过公网 IP 的 HTTP 测试阶段保持 `SESSION_COOKIE_SECURE=false`。配置 HTTPS 后必须改为 `true` 并重启应用。
+
 手动备份数据库和图片：
 
 ```bash
