@@ -14,6 +14,11 @@ FROM base AS builder
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
+# Next.js evaluates route modules while collecting build metadata. The
+# postgres client is lazy, so this build-only value is never used to connect.
+# At runtime Docker Compose supplies the real DATABASE_URL from
+# .env.production.
+ENV DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build
 RUN npm run build
 
 FROM node:22-bookworm-slim AS runner
