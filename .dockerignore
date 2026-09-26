@@ -1,0 +1,11 @@
+.git
+.next
+node_modules
+.env
+.env.*
+!.env.production.example
+npm-debug.log*
+README.md
+DEVELOPMENT_PLAN.md
+DEVLOG.md
+*.sql
