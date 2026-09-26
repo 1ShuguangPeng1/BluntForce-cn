@@ -5,7 +5,7 @@ import { posts, comments, likes } from "@/lib/db/schema";
 import { getServerUser } from "@/lib/auth-server";
 import { eq, desc, and, or, ilike, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { isOwnedStorageUrl } from "@/lib/storage/oss";
+import { isOwnedStorageUrl } from "@/lib/storage/local";
 
 type PostInput = {
   title: string;

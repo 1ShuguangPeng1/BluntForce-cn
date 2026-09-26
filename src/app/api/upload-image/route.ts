@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { getServerUser } from "@/lib/auth-server";
-import { imageExtension, uploadPublicImage } from "@/lib/storage/oss";
+import { imageExtension, uploadPublicImage } from "@/lib/storage/local";
 
 export const runtime = "nodejs";
 

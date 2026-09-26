@@ -5,7 +5,7 @@ import { users } from "@/lib/db/schema";
 import { getServerUser } from "@/lib/auth-server";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { isOwnedStorageUrl } from "@/lib/storage/oss";
+import { isOwnedStorageUrl } from "@/lib/storage/local";
 
 export async function updateProfile(data: {
   username?: string;

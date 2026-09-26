@@ -1,16 +1,43 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - .env.production
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    mem_limit: 512m
+    networks:
+      - backend
+
   app:
     build:
       context: .
     env_file:
       - .env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     expose:
       - "3000"
-    # The current ECS has 2 GB RAM. Leave capacity for Nginx and Docker.
-    mem_limit: 900m
+    volumes:
+      - uploads_data:/app/uploads
+    # The current ECS has 2 GB RAM. Leave capacity for PostgreSQL and Nginx.
+    mem_limit: 768m
     networks:
       - web
+      - backend
 
   nginx:
     image: nginx:1.27-alpine
@@ -20,6 +47,7 @@ services:
       - "80:80"
     volumes:
       - ./deploy/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - uploads_data:/srv/uploads:ro
     restart: unless-stopped
     mem_limit: 128m
     networks:
@@ -28,3 +56,12 @@ services:
 networks:
   web:
     driver: bridge
+  backend:
+    driver: bridge
+    internal: true
+
+volumes:
+  postgres_data:
+    name: bluntforce_postgres_data
+  uploads_data:
+    name: bluntforce_uploads_data
