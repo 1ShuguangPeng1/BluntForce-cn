@@ -44,7 +44,7 @@ sh scripts/backup.sh
 
 ## GitHub 自动部署
 
-`.github/workflows/deploy.yml` 会在 `main` 分支推送后，把 Git bundle 主动上传到 ECS，再执行仅快进更新和 `docker compose up --build -d`。ECS 不需要主动访问 GitHub。它需要以下 GitHub Actions Secrets：
+`.github/workflows/deploy.yml` 会在 `main` 分支推送后，在 GitHub Runner 构建应用镜像，再把 Git bundle 和镜像主动上传到 ECS。ECS 只载入镜像并重启服务，不需要访问 GitHub、Docker Hub 或 npm。它需要以下 GitHub Actions Secrets：
 
 - `DEPLOY_HOST`
 - `DEPLOY_USER`

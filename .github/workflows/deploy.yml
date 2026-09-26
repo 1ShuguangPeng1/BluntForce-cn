@@ -33,23 +33,33 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
 
-      - name: Package and upload the repository
+      - name: Build the application image
+        run: |
+          docker build -t bluntforce-cn-app:latest .
+          docker save bluntforce-cn-app:latest | gzip -1 > bluntforce-cn-app.tar.gz
+
+      - name: Package and upload the release
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
           git bundle create bluntforce-deploy.bundle main
-          scp -o BatchMode=yes -o ConnectTimeout=15 bluntforce-deploy.bundle \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/bluntforce-deploy.bundle"
+          scp -o BatchMode=yes -o ConnectTimeout=15 \
+            bluntforce-deploy.bundle bluntforce-cn-app.tar.gz \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
 
-      - name: Update and restart
+      - name: Update and restart the ECS services
         run: |
           ssh -o BatchMode=yes -o ConnectTimeout=15 "$DEPLOY_USER@$DEPLOY_HOST" \
             "cd '$DEPLOY_PATH' && \
              git fetch /tmp/bluntforce-deploy.bundle refs/heads/main:refs/remotes/deploy/main && \
              rm -f /tmp/bluntforce-deploy.bundle && \
              git merge --ff-only refs/remotes/deploy/main && \
-             docker compose --env-file .env.production up --build -d"
+             gzip -dc /tmp/bluntforce-cn-app.tar.gz | docker load && \
+             rm -f /tmp/bluntforce-cn-app.tar.gz && \
+             docker compose --env-file .env.production up --no-build --force-recreate -d app nginx && \
+             docker compose --env-file .env.production ps && \
+             curl --fail --retry 12 --retry-delay 5 --retry-connrefused http://127.0.0.1/ > /dev/null"
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
